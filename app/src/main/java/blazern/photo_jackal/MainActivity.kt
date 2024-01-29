@@ -1,6 +1,7 @@
 package blazern.photo_jackal
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
@@ -56,6 +57,7 @@ import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
+import java.text.DecimalFormat
 
 class MainActivity : ComponentActivity() {
     private val imageUri = mutableStateOf<Uri?>(null)
@@ -73,12 +75,15 @@ class MainActivity : ComponentActivity() {
         setContent {
             PhotoJackalTheme {
                 Surface(
-                    modifier = Modifier.fillMaxSize().padding(bottom = 16.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = 16.dp),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     var imageResolution by remember { mutableStateOf<Pair<Int, Int>?>(null) }
                     var compressedImageUri by remember { mutableStateOf<Uri?>(null) }
                     var processing by remember { mutableStateOf(false) }
+                    var compressedSize by remember { mutableStateOf<String?>(null) }
 
                     Column(
                         modifier = Modifier
@@ -169,6 +174,13 @@ class MainActivity : ComponentActivity() {
                                 imageUri.value = it
                             }
                         }
+                        if (compressedSize != null && compressedImageUri != null) {
+                            Button(onClick = {
+                                shareImage(compressedImageUri!!)
+                            }) {
+                                Text("Share ($compressedSize)")
+                            }
+                        }
                         val uri by remember { imageUri } // To force the `LaunchedEffect` to update
                         LaunchedEffect(compressLevel, resolutionScale, uri, imageResolution) {
                             lifecycleScope.launch {
@@ -183,6 +195,7 @@ class MainActivity : ComponentActivity() {
                                             // Mapping from [0 .. 1] to [0.1 .. 1]
                                             resolutionScale = (resolutionScale * 1f-MIN_RESOLUTION_SCALE) + MIN_RESOLUTION_SCALE,
                                         )
+                                        compressedSize = getFileSize(this@MainActivity, compressedImageUri!!)
                                     } finally {
                                         processing = false
                                     }
@@ -193,6 +206,25 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    fun shareImage(imageUri: Uri) {
+        // Convert file:// Uri to content:// Uri using FileProvider
+        val contentUri: Uri = FileProvider.getUriForFile(
+            this,
+            "$packageName.fileprovider",
+            File(imageUri.path!!)
+        )
+
+        val shareIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_STREAM, contentUri)
+            type = "image/*"
+            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+        }
+
+        val chooser = Intent.createChooser(shareIntent, "Share Image")
+        startActivity(chooser)
     }
 
     companion object {
@@ -342,4 +374,22 @@ private fun createImageFile(context: Context): File {
         ".jpg", /* suffix */
         storageDir /* directory */
     )
+}
+
+suspend fun getFileSize(context: Context, uri: Uri): String {
+    return withContext(Dispatchers.IO) {
+        context.contentResolver.openInputStream(uri)?.use { inputStream ->
+            val fileSize = inputStream.available()
+            humanReadableByteCount(fileSize.toLong(), true)
+        } ?: "Unknown size"
+    }
+}
+
+fun humanReadableByteCount(bytes: Long, si: Boolean): String {
+    val unit = if (si) 1000 else 1024
+    if (bytes < unit) return "$bytes B"
+    val exp = (Math.log(bytes.toDouble()) / Math.log(unit.toDouble())).toInt()
+    val pre = (if (si) "kMGTPE" else "KMGTPE")[exp - 1] + (if (si) "" else "i")
+    val df = DecimalFormat("#.##")
+    return df.format(bytes / Math.pow(unit.toDouble(), exp.toDouble())) + " " + pre + "B"
 }
