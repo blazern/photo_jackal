@@ -11,12 +11,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
@@ -36,6 +39,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.core.net.toFile
@@ -58,6 +63,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    var imageResolution by remember { mutableStateOf<Pair<Int, Int>?>(null) }
                     var imageUri by remember { mutableStateOf<Uri?>(null) }
                     var compressedImageUri by remember { mutableStateOf<Uri?>(null) }
                     var processing by remember { mutableStateOf(false) }
@@ -99,12 +105,44 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         Text(text = "Compression level")
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            Image(painterResource(R.drawable.jackal_0), "", modifier = Modifier.weight(1f))
+                            Image(painterResource(R.drawable.jackal_1), "", modifier = Modifier.weight(1f))
+                            Image(painterResource(R.drawable.jackal_2), "", modifier = Modifier.weight(1f))
+                            Image(painterResource(R.drawable.jackal_3), "", modifier = Modifier.weight(1f))
+                            Image(painterResource(R.drawable.jackal_4), "", modifier = Modifier.weight(1f))
+                            Image(painterResource(R.drawable.jackal_5), "", modifier = Modifier.weight(1f))
+                        }
                         Slider(
                             modifier = Modifier.weight(1f),
                             value = compressLevel,
                             onValueChange = { compressLevel = it }
                         )
-                        Text(text = "Resolution scale")
+                        Row {
+                            Text(text = "Resolution ")
+                            if (imageResolution != null) {
+                                val width = (imageResolution!!.first * resolutionScale).toInt()
+                                val height = (imageResolution!!.second * resolutionScale).toInt()
+                                Text(text = "${width}x${height}")
+                            }
+                        }
+                        if (imageResolution != null) {
+                            Row(modifier = Modifier.fillMaxWidth()) {
+                                val width = imageResolution!!.first
+                                val height = imageResolution!!.second
+                                val maxResolutionStr = "${width}x${height}"
+                                val minResolutionStr = "${(MIN_RESOLUTION_SCALE*width).toInt()}x${(MIN_RESOLUTION_SCALE*height).toInt()}"
+                                Text(
+                                    minResolutionStr,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    maxResolutionStr,
+                                    modifier = Modifier.weight(1f),
+                                    textAlign = TextAlign.End
+                                )
+                            }
+                        }
                         Slider(
                             modifier = Modifier.weight(1f),
                             value = resolutionScale,
@@ -113,17 +151,18 @@ class MainActivity : ComponentActivity() {
                         ImagePicker(modifier = Modifier.weight(2f)) {
                             imageUri = it
                         }
-                        LaunchedEffect(compressLevel, resolutionScale, imageUri) {
+                        LaunchedEffect(compressLevel, resolutionScale, imageUri, imageResolution) {
                             lifecycleScope.launch {
                                 imageUri?.let {
                                     try {
                                         processing = true
+                                        imageResolution = getImageResolution(this@MainActivity, it)
                                         compressedImageUri = compressImage(
                                             this@MainActivity,
                                             it,
                                             compressionQuality = compressLevel,
                                             // Mapping from [0 .. 1] to [0.1 .. 1]
-                                            resolutionScale = resolutionScale * 0.97f + 0.03f,
+                                            resolutionScale = (resolutionScale * 1f-MIN_RESOLUTION_SCALE) + MIN_RESOLUTION_SCALE,
                                         )
                                     } finally {
                                         processing = false
@@ -135,6 +174,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    companion object {
+        const val MIN_RESOLUTION_SCALE = 0.03f
     }
 }
 
@@ -209,6 +252,22 @@ class ComposeFileProvider : FileProvider(
             )
         }
     }
+}
+
+fun getImageResolution(context: Context, imageUri: Uri): Pair<Int, Int>? {
+    val options = BitmapFactory.Options().apply {
+        // Ensures that the bitmap is not loaded in memory
+        inJustDecodeBounds = true
+    }
+
+    val inputStream = context.contentResolver.openInputStream(imageUri)
+    BitmapFactory.decodeStream(inputStream, null, options)
+    inputStream?.close()
+
+    val width = options.outWidth
+    val height = options.outHeight
+
+    return if (width != -1 && height != -1) Pair(width, height) else null
 }
 
 private suspend fun compressImage(context: Context, imageUri: Uri, compressionQuality: Float, resolutionScale: Float): Uri? {
