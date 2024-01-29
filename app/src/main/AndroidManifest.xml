@@ -24,6 +24,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name="com.canhub.cropper.CropImageActivity"
+            android:theme="@style/Base.Theme.AppCompat"
+            />
+
         <provider
             android:name=".ComposeFileProvider"
             android:authorities="blazern.photo_jackal.fileprovider"

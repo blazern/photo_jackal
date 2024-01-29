@@ -47,6 +47,9 @@ import androidx.core.net.toFile
 import androidx.lifecycle.lifecycleScope
 import blazern.photo_jackal.ui.theme.PhotoJackalTheme
 import coil.compose.AsyncImage
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -55,6 +58,16 @@ import java.io.File
 import java.io.FileOutputStream
 
 class MainActivity : ComponentActivity() {
+    private val imageUri = mutableStateOf<Uri?>(null)
+
+    private val cropImage = registerForActivityResult(CropImageContract()) { result ->
+        if (result.isSuccessful) {
+            imageUri.value = result.uriContent
+        } else {
+            throw result.error!!
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -64,7 +77,6 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     var imageResolution by remember { mutableStateOf<Pair<Int, Int>?>(null) }
-                    var imageUri by remember { mutableStateOf<Uri?>(null) }
                     var compressedImageUri by remember { mutableStateOf<Uri?>(null) }
                     var processing by remember { mutableStateOf(false) }
 
@@ -149,11 +161,18 @@ class MainActivity : ComponentActivity() {
                             onValueChange = { resolutionScale = it }
                         )
                         ImagePicker(modifier = Modifier.weight(2f)) {
-                            imageUri = it
+                            if (it != null) {
+                                cropImage.launch(
+                                    CropImageContractOptions(uri = it, cropImageOptions = CropImageOptions())
+                                )
+                            } else {
+                                imageUri.value = it
+                            }
                         }
-                        LaunchedEffect(compressLevel, resolutionScale, imageUri, imageResolution) {
+                        val uri by remember { imageUri } // To force the `LaunchedEffect` to update
+                        LaunchedEffect(compressLevel, resolutionScale, uri, imageResolution) {
                             lifecycleScope.launch {
-                                imageUri?.let {
+                                uri?.let {
                                     try {
                                         processing = true
                                         imageResolution = getImageResolution(this@MainActivity, it)
