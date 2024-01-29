@@ -60,7 +60,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             PhotoJackalTheme {
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().padding(bottom = 16.dp),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     var imageResolution by remember { mutableStateOf<Pair<Int, Int>?>(null) }
@@ -220,7 +220,6 @@ fun ImagePicker(
             Text(text = "Select Image")
         }
         Button(
-            modifier = Modifier.padding(top = 8.dp),
             onClick = {
                 val uri = ComposeFileProvider.getImageUri(context)
                 cameraImageUri = uri
