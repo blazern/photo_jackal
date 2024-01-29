@@ -1,28 +1,137 @@
 package blazern.photo_jackal
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import androidx.exifinterface.media.ExifInterface
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
+import androidx.core.net.toFile
+import androidx.lifecycle.lifecycleScope
 import blazern.photo_jackal.ui.theme.PhotoJackalTheme
+import coil.compose.AsyncImage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             PhotoJackalTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting("Android")
+                    var imageUri by remember { mutableStateOf<Uri?>(null) }
+                    var compressedImageUri by remember { mutableStateOf<Uri?>(null) }
+                    var processing by remember { mutableStateOf(false) }
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxHeight(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        var compressLevel by remember { mutableFloatStateOf(0.5f) }
+                        var resolutionScale by remember { mutableFloatStateOf(1.0f) }
+                        Column(
+                            modifier = Modifier.weight(10f),
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                if (compressedImageUri != null) {
+                                    AsyncImage(
+                                        model = compressedImageUri,
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentDescription = "Selected image",
+                                    )
+                                }
+                                if (processing) {
+                                    Box(
+                                        modifier = Modifier
+                                            .background(Color.White.copy(alpha = 0.5f))
+                                            .fillMaxSize(),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(50.dp),
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        Text(text = "Compression level")
+                        Slider(
+                            modifier = Modifier.weight(1f),
+                            value = compressLevel,
+                            onValueChange = { compressLevel = it }
+                        )
+                        Text(text = "Resolution scale")
+                        Slider(
+                            modifier = Modifier.weight(1f),
+                            value = resolutionScale,
+                            onValueChange = { resolutionScale = it }
+                        )
+                        ImagePicker(modifier = Modifier.weight(2f)) {
+                            imageUri = it
+                        }
+                        LaunchedEffect(compressLevel, resolutionScale, imageUri) {
+                            lifecycleScope.launch {
+                                imageUri?.let {
+                                    try {
+                                        processing = true
+                                        compressedImageUri = compressImage(
+                                            this@MainActivity,
+                                            it,
+                                            compressionQuality = compressLevel,
+                                            // Mapping from [0 .. 1] to [0.1 .. 1]
+                                            resolutionScale = resolutionScale * 0.97f + 0.03f,
+                                        )
+                                    } finally {
+                                        processing = false
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -30,17 +139,130 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
+fun ImagePicker(
+    modifier: Modifier = Modifier,
+    onImagePicked: (Uri?)->Unit
+) {
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri ->
+            onImagePicked.invoke(uri)
+        }
     )
+
+    var cameraImageUri by remember {
+        mutableStateOf<Uri?>(null)
+    }
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = { success ->
+            if (success) {
+                onImagePicked.invoke(cameraImageUri)
+            } else {
+                onImagePicked.invoke(null)
+            }
+        }
+    )
+
+    val context = LocalContext.current
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Button(
+            onClick = {
+                imagePicker.launch("image/*")
+            },
+        ) {
+            Text(text = "Select Image")
+        }
+        Button(
+            modifier = Modifier.padding(top = 8.dp),
+            onClick = {
+                val uri = ComposeFileProvider.getImageUri(context)
+                cameraImageUri = uri
+                cameraLauncher.launch(uri)
+            },
+        ) {
+            Text(text = "Take photo")
+        }
+    }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    PhotoJackalTheme {
-        Greeting("Android")
+class ComposeFileProvider : FileProvider(
+    R.xml.filepaths
+) {
+    companion object {
+        fun getImageUri(context: Context): Uri {
+            val directory = File(context.cacheDir, "images")
+            directory.mkdirs()
+            val file = File.createTempFile(
+                "selected_image_",
+                ".jpg",
+                directory,
+            )
+            val authority = context.packageName + ".fileprovider"
+            return getUriForFile(
+                context,
+                authority,
+                file,
+            )
+        }
     }
+}
+
+private suspend fun compressImage(context: Context, imageUri: Uri, compressionQuality: Float, resolutionScale: Float): Uri? {
+    return withContext(Dispatchers.IO) {
+        // Get the orientation
+        var inputStream = context.contentResolver.openInputStream(imageUri)
+        val exifInterface = ExifInterface(inputStream!!)
+        val orientation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+        inputStream.close()
+
+        // Get the bitmap from Uri
+        inputStream = context.contentResolver.openInputStream(imageUri)
+        val originalBitmap = BitmapFactory.decodeStream(inputStream)
+
+        // Calculate new dimensions
+        val newWidth = (originalBitmap.width * resolutionScale).toInt()
+        val newHeight = (originalBitmap.height * resolutionScale).toInt()
+
+        // Scale the bitmap
+        var scaledBitmap = Bitmap.createScaledBitmap(originalBitmap, newWidth, newHeight, true)
+
+        // Rotate
+        val matrix = Matrix()
+        when (orientation) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+            ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+            ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+        }
+        scaledBitmap = Bitmap.createBitmap(scaledBitmap, 0, 0, scaledBitmap.width, scaledBitmap.height, matrix, true)
+
+        // Compress the bitmap
+        val outputStream = ByteArrayOutputStream()
+        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, (compressionQuality*100).toInt(), outputStream)
+        val compressedData = outputStream.toByteArray()
+
+        // Save the compressed bitmap to a file
+        val compressedFile = createImageFile(context)
+        val fileOutputStream = FileOutputStream(compressedFile)
+        fileOutputStream.write(compressedData)
+        fileOutputStream.flush()
+        fileOutputStream.close()
+
+        // Return the Uri of the compressed file
+        Uri.fromFile(compressedFile)
+    }
+}
+
+private fun createImageFile(context: Context): File {
+    // Create an image file name (you might want to add a timestamp or a unique identifier)
+    val fileName = "compressed_image"
+    val storageDir = context.getExternalFilesDir(null)
+    return File.createTempFile(
+        fileName, /* prefix */
+        ".jpg", /* suffix */
+        storageDir /* directory */
+    )
 }
