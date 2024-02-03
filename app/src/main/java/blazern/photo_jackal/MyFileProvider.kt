@@ -10,9 +10,11 @@ class MyFileProvider : FileProvider(
     R.xml.filepaths
 ) {
     companion object {
+        fun getImagesCacheDir(context: Context) =
+            File(context.cacheDir, "images").apply { mkdirs() }
+
         fun getImageUri(context: Context): Uri {
-            val directory = File(context.cacheDir, "images")
-            directory.mkdirs()
+            val directory = getImagesCacheDir(context)
             val file = File.createTempFile(
                 "selected_image",
                 ".jpg",

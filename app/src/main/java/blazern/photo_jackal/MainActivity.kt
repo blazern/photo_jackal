@@ -2,9 +2,6 @@ package blazern.photo_jackal
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Matrix
 import android.net.Uri
 import android.os.Bundle
 import android.text.format.Formatter.formatShortFileSize
@@ -44,18 +41,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.core.content.FileProvider
-import androidx.exifinterface.media.ExifInterface
 import androidx.lifecycle.lifecycleScope
 import blazern.photo_jackal.ui.theme.PhotoJackalTheme
 import coil.compose.AsyncImage
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 
@@ -189,12 +181,12 @@ class MainActivity : ComponentActivity() {
                                     try {
                                         processing = true
                                         imageResolution = getImageResolution(it)
-                                        compressedImageUri = compressImage(
-                                            this@MainActivity,
+                                        // Mapping from [0 .. 1] to [0.1 .. 1]
+                                        val mappedScale = (resolutionScale * 1f-MIN_RESOLUTION_SCALE) + MIN_RESOLUTION_SCALE
+                                        compressedImageUri = compressAndSaveImage(
                                             it,
                                             compressionQuality = compressLevel,
-                                            // Mapping from [0 .. 1] to [0.1 .. 1]
-                                            resolutionScale = (resolutionScale * 1f-MIN_RESOLUTION_SCALE) + MIN_RESOLUTION_SCALE,
+                                            Size((imageResolution!!.width * mappedScale).toInt(), (imageResolution!!.height * mappedScale).toInt()),
                                         )
                                         val fileSize =calculateFileSize(compressedImageUri!!)
                                         compressedSize = formatShortFileSize(this@MainActivity, fileSize?.toLong() ?: -1L)
@@ -210,7 +202,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    fun shareImage(imageUri: Uri) {
+    private suspend fun compressAndSaveImage(imageUri: Uri, compressionQuality: Float, finalSize: Size): Uri {
+        val compressedFile = createImageFile(this)
+        val fileOutputStream = FileOutputStream(compressedFile)
+        compressImage(imageUri, compressionQuality, finalSize, fileOutputStream)
+        fileOutputStream.flush()
+        fileOutputStream.close()
+        return Uri.fromFile(compressedFile)
+    }
+
+    private fun shareImage(imageUri: Uri) {
         // Convert file:// Uri to content:// Uri using FileProvider
         val contentUri: Uri = MyFileProvider.getUriForFile(
             this,
@@ -283,58 +284,13 @@ fun ImagePicker(
     }
 }
 
-private suspend fun compressImage(context: Context, imageUri: Uri, compressionQuality: Float, resolutionScale: Float): Uri? {
-    return withContext(Dispatchers.IO) {
-        // Get the orientation
-        var inputStream = context.contentResolver.openInputStream(imageUri)
-        val exifInterface = ExifInterface(inputStream!!)
-        val orientation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
-        inputStream.close()
-
-        // Get the bitmap from Uri
-        inputStream = context.contentResolver.openInputStream(imageUri)
-        val originalBitmap = BitmapFactory.decodeStream(inputStream)
-
-        // Calculate new dimensions
-        val newWidth = (originalBitmap.width * resolutionScale).toInt()
-        val newHeight = (originalBitmap.height * resolutionScale).toInt()
-
-        // Scale the bitmap
-        var scaledBitmap = Bitmap.createScaledBitmap(originalBitmap, newWidth, newHeight, true)
-
-        // Rotate
-        val matrix = Matrix()
-        when (orientation) {
-            ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
-            ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
-            ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
-        }
-        scaledBitmap = Bitmap.createBitmap(scaledBitmap, 0, 0, scaledBitmap.width, scaledBitmap.height, matrix, true)
-
-        // Compress the bitmap
-        val outputStream = ByteArrayOutputStream()
-        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, (compressionQuality*100).toInt(), outputStream)
-        val compressedData = outputStream.toByteArray()
-
-        // Save the compressed bitmap to a file
-        val compressedFile = createImageFile(context)
-        val fileOutputStream = FileOutputStream(compressedFile)
-        fileOutputStream.write(compressedData)
-        fileOutputStream.flush()
-        fileOutputStream.close()
-
-        // Return the Uri of the compressed file
-        Uri.fromFile(compressedFile)
-    }
-}
 
 private fun createImageFile(context: Context): File {
-    // Create an image file name (you might want to add a timestamp or a unique identifier)
     val fileName = "compressed_image"
-    val storageDir = context.getExternalFilesDir(null)
+    val storageDir = MyFileProvider.getImagesCacheDir(context)
     return File.createTempFile(
-        fileName, /* prefix */
-        ".jpg", /* suffix */
-        storageDir /* directory */
+        fileName,
+        ".jpg",
+        storageDir
     )
 }
