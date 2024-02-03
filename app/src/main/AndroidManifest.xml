@@ -29,7 +29,7 @@
             />
 
         <provider
-            android:name=".ComposeFileProvider"
+            android:name=".MyFileProvider"
             android:authorities="blazern.photo_jackal.fileprovider"
             android:grantUriPermissions="true"
             android:exported="false">

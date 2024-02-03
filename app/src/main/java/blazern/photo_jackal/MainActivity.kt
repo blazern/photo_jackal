@@ -5,9 +5,10 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
-import androidx.exifinterface.media.ExifInterface
 import android.net.Uri
 import android.os.Bundle
+import android.text.format.Formatter.formatShortFileSize
+import android.util.Size
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -44,7 +45,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
-import androidx.core.net.toFile
+import androidx.exifinterface.media.ExifInterface
 import androidx.lifecycle.lifecycleScope
 import blazern.photo_jackal.ui.theme.PhotoJackalTheme
 import coil.compose.AsyncImage
@@ -57,7 +58,7 @@ import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
-import java.text.DecimalFormat
+
 
 class MainActivity : ComponentActivity() {
     private val imageUri = mutableStateOf<Uri?>(null)
@@ -80,7 +81,7 @@ class MainActivity : ComponentActivity() {
                         .padding(bottom = 16.dp),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    var imageResolution by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+                    var imageResolution by remember { mutableStateOf<Size?>(null) }
                     var compressedImageUri by remember { mutableStateOf<Uri?>(null) }
                     var processing by remember { mutableStateOf(false) }
                     var compressedSize by remember { mutableStateOf<String?>(null) }
@@ -138,15 +139,15 @@ class MainActivity : ComponentActivity() {
                         Row {
                             Text(text = "Resolution ")
                             if (imageResolution != null) {
-                                val width = (imageResolution!!.first * resolutionScale).toInt()
-                                val height = (imageResolution!!.second * resolutionScale).toInt()
+                                val width = (imageResolution!!.width * resolutionScale).toInt()
+                                val height = (imageResolution!!.height * resolutionScale).toInt()
                                 Text(text = "${width}x${height}")
                             }
                         }
                         if (imageResolution != null) {
                             Row(modifier = Modifier.fillMaxWidth()) {
-                                val width = imageResolution!!.first
-                                val height = imageResolution!!.second
+                                val width = imageResolution!!.width
+                                val height = imageResolution!!.height
                                 val maxResolutionStr = "${width}x${height}"
                                 val minResolutionStr = "${(MIN_RESOLUTION_SCALE*width).toInt()}x${(MIN_RESOLUTION_SCALE*height).toInt()}"
                                 Text(
@@ -187,7 +188,7 @@ class MainActivity : ComponentActivity() {
                                 uri?.let {
                                     try {
                                         processing = true
-                                        imageResolution = getImageResolution(this@MainActivity, it)
+                                        imageResolution = getImageResolution(it)
                                         compressedImageUri = compressImage(
                                             this@MainActivity,
                                             it,
@@ -195,7 +196,8 @@ class MainActivity : ComponentActivity() {
                                             // Mapping from [0 .. 1] to [0.1 .. 1]
                                             resolutionScale = (resolutionScale * 1f-MIN_RESOLUTION_SCALE) + MIN_RESOLUTION_SCALE,
                                         )
-                                        compressedSize = getFileSize(this@MainActivity, compressedImageUri!!)
+                                        val fileSize =calculateFileSize(compressedImageUri!!)
+                                        compressedSize = formatShortFileSize(this@MainActivity, fileSize?.toLong() ?: -1L)
                                     } finally {
                                         processing = false
                                     }
@@ -210,9 +212,8 @@ class MainActivity : ComponentActivity() {
 
     fun shareImage(imageUri: Uri) {
         // Convert file:// Uri to content:// Uri using FileProvider
-        val contentUri: Uri = FileProvider.getUriForFile(
+        val contentUri: Uri = MyFileProvider.getUriForFile(
             this,
-            "$packageName.fileprovider",
             File(imageUri.path!!)
         )
 
@@ -272,7 +273,7 @@ fun ImagePicker(
         }
         Button(
             onClick = {
-                val uri = ComposeFileProvider.getImageUri(context)
+                val uri = MyFileProvider.getImageUri(context)
                 cameraImageUri = uri
                 cameraLauncher.launch(uri)
             },
@@ -280,44 +281,6 @@ fun ImagePicker(
             Text(text = "Take photo")
         }
     }
-}
-
-class ComposeFileProvider : FileProvider(
-    R.xml.filepaths
-) {
-    companion object {
-        fun getImageUri(context: Context): Uri {
-            val directory = File(context.cacheDir, "images")
-            directory.mkdirs()
-            val file = File.createTempFile(
-                "selected_image_",
-                ".jpg",
-                directory,
-            )
-            val authority = context.packageName + ".fileprovider"
-            return getUriForFile(
-                context,
-                authority,
-                file,
-            )
-        }
-    }
-}
-
-fun getImageResolution(context: Context, imageUri: Uri): Pair<Int, Int>? {
-    val options = BitmapFactory.Options().apply {
-        // Ensures that the bitmap is not loaded in memory
-        inJustDecodeBounds = true
-    }
-
-    val inputStream = context.contentResolver.openInputStream(imageUri)
-    BitmapFactory.decodeStream(inputStream, null, options)
-    inputStream?.close()
-
-    val width = options.outWidth
-    val height = options.outHeight
-
-    return if (width != -1 && height != -1) Pair(width, height) else null
 }
 
 private suspend fun compressImage(context: Context, imageUri: Uri, compressionQuality: Float, resolutionScale: Float): Uri? {
@@ -374,22 +337,4 @@ private fun createImageFile(context: Context): File {
         ".jpg", /* suffix */
         storageDir /* directory */
     )
-}
-
-suspend fun getFileSize(context: Context, uri: Uri): String {
-    return withContext(Dispatchers.IO) {
-        context.contentResolver.openInputStream(uri)?.use { inputStream ->
-            val fileSize = inputStream.available()
-            humanReadableByteCount(fileSize.toLong(), true)
-        } ?: "Unknown size"
-    }
-}
-
-fun humanReadableByteCount(bytes: Long, si: Boolean): String {
-    val unit = if (si) 1000 else 1024
-    if (bytes < unit) return "$bytes B"
-    val exp = (Math.log(bytes.toDouble()) / Math.log(unit.toDouble())).toInt()
-    val pre = (if (si) "kMGTPE" else "KMGTPE")[exp - 1] + (if (si) "" else "i")
-    val df = DecimalFormat("#.##")
-    return df.format(bytes / Math.pow(unit.toDouble(), exp.toDouble())) + " " + pre + "B"
 }
