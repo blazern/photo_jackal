@@ -20,6 +20,8 @@ class MainScreenViewModel @Inject constructor(
     private val getImageResolutionUseCase: GetImageResolutionUseCase,
     private val calculateFileSizeUseCase: CalculateFileSizeUseCase,
 ) : ViewModel() {
+    private var recalculateAndSaveCompressedStateScheduled = false
+
     private val _state = mutableStateOf(MainScreenState())
     val state: State<MainScreenState> = _state
 
@@ -83,6 +85,11 @@ class MainScreenViewModel @Inject constructor(
             return
         }
 
+        if (state.value.processingImage) {
+            recalculateAndSaveCompressedStateScheduled = true
+            return
+        }
+
         _state.value = state.value.copy(processingImage = true)
         try {
             // So that the resolution would never be 0x0
@@ -105,6 +112,10 @@ class MainScreenViewModel @Inject constructor(
             )
         } finally {
             _state.value = state.value.copy(processingImage = false)
+            if (recalculateAndSaveCompressedStateScheduled) {
+                recalculateAndSaveCompressedStateScheduled = false
+                recalculateAndSaveCompressedState()
+            }
         }
     }
 
