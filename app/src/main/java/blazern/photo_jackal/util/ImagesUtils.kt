@@ -1,14 +1,17 @@
 package blazern.photo_jackal.util
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
 import android.util.Size
 import androidx.exifinterface.media.ExifInterface
+import blazern.photo_jackal.MyFileProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.io.IOException
 import java.io.OutputStream
 
@@ -72,4 +75,21 @@ private fun Context.compressImageImpl(imageUri: Uri, compressionQuality: Float, 
     // Compress the bitmap
     scaledBitmap.compress(Bitmap.CompressFormat.JPEG, (compressionQuality*100).toInt(), result)
     result.flush()
+}
+
+fun Context.shareImage(imageUri: Uri) {
+    val contentUri = MyFileProvider.getUriForFile(
+        this,
+        File(imageUri.path!!)
+    )
+
+    val shareIntent = Intent().apply {
+        action = Intent.ACTION_SEND
+        putExtra(Intent.EXTRA_STREAM, contentUri)
+        type = "image/*"
+        flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+    }
+
+    val chooser = Intent.createChooser(shareIntent, "Share Image") // TODO: i18n
+    startActivity(chooser)
 }

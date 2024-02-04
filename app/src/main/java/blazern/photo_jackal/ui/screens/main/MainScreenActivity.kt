@@ -1,6 +1,5 @@
 package blazern.photo_jackal.ui.screens.main
 
-import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.text.format.Formatter.formatShortFileSize
@@ -39,21 +38,18 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
-import blazern.photo_jackal.MyFileProvider
 import blazern.photo_jackal.R
 import blazern.photo_jackal.ui.ImagePicker
 import blazern.photo_jackal.ui.theme.PhotoJackalTheme
 import blazern.photo_jackal.util.calculateFileSize
-import blazern.photo_jackal.util.compressImage
 import blazern.photo_jackal.util.getImageResolution
+import blazern.photo_jackal.util.shareImage
 import coil.compose.AsyncImage
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import java.io.File
-import java.io.FileOutputStream
 
 @AndroidEntryPoint
 class MainScreenActivity : ComponentActivity() {
@@ -188,7 +184,7 @@ class MainScreenActivity : ComponentActivity() {
                                         imageResolution = getImageResolution(it)
                                         // Mapping from [0 .. 1] to [0.1 .. 1]
                                         val mappedScale = (resolutionScale * 1f- MIN_RESOLUTION_SCALE) + MIN_RESOLUTION_SCALE
-                                        compressedImageUri = compressAndSaveImage(
+                                        compressedImageUri = viewModel.compressAndSaveImage(
                                             it,
                                             compressionQuality = compressLevel,
                                             Size((imageResolution!!.width * mappedScale).toInt(), (imageResolution!!.height * mappedScale).toInt()),
@@ -205,38 +201,6 @@ class MainScreenActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    private suspend fun compressAndSaveImage(imageUri: Uri, compressionQuality: Float, finalSize: Size): Uri {
-        val fileName = "compressed_image"
-        val storageDir = MyFileProvider.getImagesCacheDir(this)
-        val compressedFile = File.createTempFile(
-            fileName,
-            ".jpg",
-            storageDir
-        )
-        val fileOutputStream = FileOutputStream(compressedFile)
-        compressImage(imageUri, compressionQuality, finalSize, fileOutputStream)
-        fileOutputStream.flush()
-        fileOutputStream.close()
-        return Uri.fromFile(compressedFile)
-    }
-
-    private fun shareImage(imageUri: Uri) {
-        val contentUri = MyFileProvider.getUriForFile(
-            this,
-            File(imageUri.path!!)
-        )
-
-        val shareIntent = Intent().apply {
-            action = Intent.ACTION_SEND
-            putExtra(Intent.EXTRA_STREAM, contentUri)
-            type = "image/*"
-            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-        }
-
-        val chooser = Intent.createChooser(shareIntent, "Share Image") // TODO: i18n
-        startActivity(chooser)
     }
 
     companion object {
