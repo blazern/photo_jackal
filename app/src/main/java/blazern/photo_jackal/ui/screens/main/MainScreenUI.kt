@@ -13,8 +13,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
@@ -27,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -44,6 +50,7 @@ fun MainScreenUI(
     onResolutionScaleChange: (Float)->Unit,
     onUserPickedImage: (Uri?)->Unit,
     onShareImageClick: ()->Unit,
+    onRemoveImageCLick: ()->Unit,
 ) {
     Surface(
         modifier = Modifier
@@ -66,11 +73,24 @@ fun MainScreenUI(
                 ) {
                     val compressedImageUri by remember { derivedStateOf { state.value.compressedImage } }
                     if (compressedImageUri != null) {
-                        AsyncImage(
-                            model = compressedImageUri,
-                            modifier = Modifier.fillMaxSize(),
-                            contentDescription = stringResource(R.string.selected_image),
-                        )
+                        Box {
+                            AsyncImage(
+                                model = compressedImageUri,
+                                modifier = Modifier.fillMaxSize(),
+                                contentDescription = stringResource(R.string.selected_image),
+                            )
+                            Button(
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .padding(end = 16.dp)
+                                    .shadow(5.dp, shape = RoundedCornerShape(32.dp)),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                                onClick = {
+                                    onRemoveImageCLick.invoke()
+                                }) {
+                                Text(stringResource(R.string.clear_image), color = Color.Black)
+                            }
+                        }
                     }
                     val processing by remember { derivedStateOf { state.value.processingImage } }
                     if (processing) {
@@ -92,7 +112,8 @@ fun MainScreenUI(
             } }
             Column(modifier = Modifier
                 .weight(4f)
-                .alpha(controlsAlpha),
+                .alpha(controlsAlpha)
+                .padding(start = 16.dp, end = 16.dp, top = 8.dp),
                 verticalArrangement = Arrangement.Center)
             {
                 Text(text = stringResource(R.string.compression_level))
@@ -144,8 +165,11 @@ fun MainScreenUI(
                     onValueChange = { onResolutionScaleChange.invoke(it) }
                 )
             }
-            ImagePicker(modifier = Modifier.weight(2f)) {
-                onUserPickedImage.invoke(it)
+            val selectedImage by remember { derivedStateOf { state.value.selectedImage } }
+            if (selectedImage == null) {
+                ImagePicker(modifier = Modifier.weight(1f)) {
+                    onUserPickedImage.invoke(it)
+                }
             }
             val compressedSize by remember { derivedStateOf { state.value.compressedImageSize } }
             val compressedImageUri by remember { derivedStateOf { state.value.compressedImage } }

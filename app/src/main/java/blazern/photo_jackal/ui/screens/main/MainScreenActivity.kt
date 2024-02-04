@@ -65,6 +65,7 @@ class MainScreenActivity : ComponentActivity() {
                     onResolutionScaleChange = { viewModel.onResolutionScaleChange(it) },
                     onUserPickedImage = ::onUserPickedImage,
                     onShareImageClick = ::shareCompressedImage,
+                    onRemoveImageCLick = { viewModel.removeSelectedImage() }
                 )
             }
         }

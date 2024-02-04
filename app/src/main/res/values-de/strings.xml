@@ -6,5 +6,6 @@
     <string name="share">Teilen</string>
     <string name="share_image">Teilen</string>
     <string name="select_image">Bild auswählen</string>
+    <string name="clear_image">Bild löschen</string>
     <string name="take_photo">Foto machen</string>
 </resources>

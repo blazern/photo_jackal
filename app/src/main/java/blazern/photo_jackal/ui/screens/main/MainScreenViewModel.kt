@@ -29,6 +29,10 @@ class MainScreenViewModel @Inject constructor(
         onImagePicked(result)
     }
 
+    fun removeSelectedImage() {
+        onImagePicked(Result.success(null))
+    }
+
     fun onImagePicked(result: Result<Uri?>) {
         if (!result.isSuccess) {
             throw result.exceptionOrNull()!!
