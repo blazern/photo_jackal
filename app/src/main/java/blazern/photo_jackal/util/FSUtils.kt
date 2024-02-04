@@ -1,4 +1,4 @@
-package blazern.photo_jackal
+package blazern.photo_jackal.util
 
 import android.content.Context
 import android.net.Uri

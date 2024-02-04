@@ -1,15 +1,13 @@
-package blazern.photo_jackal
+package blazern.photo_jackal.ui.screens.main
 
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.text.format.Formatter.formatShortFileSize
 import android.util.Size
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -27,8 +25,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -37,12 +35,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import blazern.photo_jackal.MyFileProvider
+import blazern.photo_jackal.R
+import blazern.photo_jackal.ui.ImagePicker
 import blazern.photo_jackal.ui.theme.PhotoJackalTheme
+import blazern.photo_jackal.util.calculateFileSize
+import blazern.photo_jackal.util.compressImage
+import blazern.photo_jackal.util.getImageResolution
 import coil.compose.AsyncImage
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
@@ -52,14 +55,14 @@ import java.io.File
 import java.io.FileOutputStream
 
 
-class MainActivity : ComponentActivity() {
-    private val imageUri = mutableStateOf<Uri?>(null)
+class MainScreenActivity : ComponentActivity() {
+    private val viewModel by viewModels<MainScreenViewModel>()
 
-    private val cropImage = registerForActivityResult(CropImageContract()) { result ->
+    private val cropImageLauncher = registerForActivityResult(CropImageContract()) { result ->
         if (result.isSuccessful) {
-            imageUri.value = result.uriContent
+            viewModel.onCropImageResult(Result.success(result.uriContent))
         } else {
-            throw result.error!!
+            viewModel.onCropImageResult(Result.failure(result.error!!))
         }
     }
 
@@ -141,7 +144,7 @@ class MainActivity : ComponentActivity() {
                                 val width = imageResolution!!.width
                                 val height = imageResolution!!.height
                                 val maxResolutionStr = "${width}x${height}"
-                                val minResolutionStr = "${(MIN_RESOLUTION_SCALE*width).toInt()}x${(MIN_RESOLUTION_SCALE*height).toInt()}"
+                                val minResolutionStr = "${(MIN_RESOLUTION_SCALE *width).toInt()}x${(MIN_RESOLUTION_SCALE *height).toInt()}"
                                 Text(
                                     minResolutionStr,
                                     modifier = Modifier.weight(1f)
@@ -160,11 +163,11 @@ class MainActivity : ComponentActivity() {
                         )
                         ImagePicker(modifier = Modifier.weight(2f)) {
                             if (it != null) {
-                                cropImage.launch(
+                                cropImageLauncher.launch(
                                     CropImageContractOptions(uri = it, cropImageOptions = CropImageOptions())
                                 )
                             } else {
-                                imageUri.value = it
+                                viewModel.onImagePicked(Result.success(null))
                             }
                         }
                         if (compressedSize != null && compressedImageUri != null) {
@@ -174,7 +177,8 @@ class MainActivity : ComponentActivity() {
                                 Text("Share ($compressedSize)")
                             }
                         }
-                        val uri by remember { imageUri } // To force the `LaunchedEffect` to update
+                        // To force the `LaunchedEffect` to update each time URI updates
+                        val uri by remember { derivedStateOf { viewModel.state.value.selectedImage } }
                         LaunchedEffect(compressLevel, resolutionScale, uri, imageResolution) {
                             lifecycleScope.launch {
                                 uri?.let {
@@ -182,14 +186,14 @@ class MainActivity : ComponentActivity() {
                                         processing = true
                                         imageResolution = getImageResolution(it)
                                         // Mapping from [0 .. 1] to [0.1 .. 1]
-                                        val mappedScale = (resolutionScale * 1f-MIN_RESOLUTION_SCALE) + MIN_RESOLUTION_SCALE
+                                        val mappedScale = (resolutionScale * 1f- MIN_RESOLUTION_SCALE) + MIN_RESOLUTION_SCALE
                                         compressedImageUri = compressAndSaveImage(
                                             it,
                                             compressionQuality = compressLevel,
                                             Size((imageResolution!!.width * mappedScale).toInt(), (imageResolution!!.height * mappedScale).toInt()),
                                         )
                                         val fileSize =calculateFileSize(compressedImageUri!!)
-                                        compressedSize = formatShortFileSize(this@MainActivity, fileSize?.toLong() ?: -1L)
+                                        compressedSize = formatShortFileSize(this@MainScreenActivity, fileSize?.toLong() ?: -1L)
                                     } finally {
                                         processing = false
                                     }
@@ -203,7 +207,13 @@ class MainActivity : ComponentActivity() {
     }
 
     private suspend fun compressAndSaveImage(imageUri: Uri, compressionQuality: Float, finalSize: Size): Uri {
-        val compressedFile = createImageFile(this)
+        val fileName = "compressed_image"
+        val storageDir = MyFileProvider.getImagesCacheDir(this)
+        val compressedFile = File.createTempFile(
+            fileName,
+            ".jpg",
+            storageDir
+        )
         val fileOutputStream = FileOutputStream(compressedFile)
         compressImage(imageUri, compressionQuality, finalSize, fileOutputStream)
         fileOutputStream.flush()
@@ -212,8 +222,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun shareImage(imageUri: Uri) {
-        // Convert file:// Uri to content:// Uri using FileProvider
-        val contentUri: Uri = MyFileProvider.getUriForFile(
+        val contentUri = MyFileProvider.getUriForFile(
             this,
             File(imageUri.path!!)
         )
@@ -225,7 +234,7 @@ class MainActivity : ComponentActivity() {
             flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
         }
 
-        val chooser = Intent.createChooser(shareIntent, "Share Image")
+        val chooser = Intent.createChooser(shareIntent, "Share Image") // TODO: i18n
         startActivity(chooser)
     }
 
@@ -234,63 +243,3 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable
-fun ImagePicker(
-    modifier: Modifier = Modifier,
-    onImagePicked: (Uri?)->Unit
-) {
-    val imagePicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent(),
-        onResult = { uri ->
-            onImagePicked.invoke(uri)
-        }
-    )
-
-    var cameraImageUri by remember {
-        mutableStateOf<Uri?>(null)
-    }
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture(),
-        onResult = { success ->
-            if (success) {
-                onImagePicked.invoke(cameraImageUri)
-            } else {
-                onImagePicked.invoke(null)
-            }
-        }
-    )
-
-    val context = LocalContext.current
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Button(
-            onClick = {
-                imagePicker.launch("image/*")
-            },
-        ) {
-            Text(text = "Select Image")
-        }
-        Button(
-            onClick = {
-                val uri = MyFileProvider.getImageUri(context)
-                cameraImageUri = uri
-                cameraLauncher.launch(uri)
-            },
-        ) {
-            Text(text = "Take photo")
-        }
-    }
-}
-
-
-private fun createImageFile(context: Context): File {
-    val fileName = "compressed_image"
-    val storageDir = MyFileProvider.getImagesCacheDir(context)
-    return File.createTempFile(
-        fileName,
-        ".jpg",
-        storageDir
-    )
-}
