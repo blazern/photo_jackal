@@ -88,12 +88,11 @@ fun MainScreenUI(
             }
             Text(text = stringResource(R.string.compression_level))
             Row(modifier = Modifier.fillMaxWidth()) {
-                Image(painterResource(R.drawable.jackal_0), "", modifier = Modifier.weight(1f))
-                Image(painterResource(R.drawable.jackal_1), "", modifier = Modifier.weight(1f))
-                Image(painterResource(R.drawable.jackal_2), "", modifier = Modifier.weight(1f))
-                Image(painterResource(R.drawable.jackal_3), "", modifier = Modifier.weight(1f))
                 Image(painterResource(R.drawable.jackal_4), "", modifier = Modifier.weight(1f))
-                Image(painterResource(R.drawable.jackal_5), "", modifier = Modifier.weight(1f))
+                Image(painterResource(R.drawable.jackal_3), "", modifier = Modifier.weight(1f))
+                Image(painterResource(R.drawable.jackal_2), "", modifier = Modifier.weight(1f))
+                Image(painterResource(R.drawable.jackal_1), "", modifier = Modifier.weight(1f))
+                Image(painterResource(R.drawable.jackal_0), "", modifier = Modifier.weight(1f))
             }
             val compressLevel by remember { derivedStateOf { state.value.imageCompressLevel } }
             Slider(
