@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import blazern.photo_jackal.R
@@ -67,7 +68,7 @@ fun MainScreenUI(
                         AsyncImage(
                             model = compressedImageUri,
                             modifier = Modifier.fillMaxSize(),
-                            contentDescription = "Selected image", // TODO: i18n
+                            contentDescription = stringResource(R.string.selected_image),
                         )
                     }
                     val processing by remember { derivedStateOf { state.value.processingImage } }
@@ -85,7 +86,7 @@ fun MainScreenUI(
                     }
                 }
             }
-            Text(text = "Compression level") // TODO: i18n
+            Text(text = stringResource(R.string.compression_level))
             Row(modifier = Modifier.fillMaxWidth()) {
                 Image(painterResource(R.drawable.jackal_0), "", modifier = Modifier.weight(1f))
                 Image(painterResource(R.drawable.jackal_1), "", modifier = Modifier.weight(1f))
@@ -102,7 +103,7 @@ fun MainScreenUI(
             )
             val compressedImageResolution by remember { derivedStateOf { state.value.compressedImageResolution } }
             Row {
-                Text(text = "Resolution ") // TODO: i18n
+                Text(text = stringResource(R.string.resolution) + " ")
                 val compressedWidth = compressedImageResolution?.width
                 val compressedHeight = compressedImageResolution?.height
                 if (compressedWidth != null && compressedHeight != null) {
@@ -147,7 +148,7 @@ fun MainScreenUI(
                 Button(onClick = {
                     onShareImageClick()
                 }) {
-                    Text("Share ($sizeHumanReadable)") // TODO: i18n
+                    Text(stringResource(R.string.share) + " ($sizeHumanReadable)")
                 }
             }
         }

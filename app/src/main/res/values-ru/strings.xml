@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Фото Шакал</string>
+    <string name="selected_image">Выбранная картинка</string>
+    <string name="compression_level">Уровень сжатия</string>
+    <string name="resolution">Разрешение</string>
+    <string name="share">Поделиться</string>
+    <string name="share_image">Поделиться картинкой</string>
+    <string name="select_image">Выбрать картинку</string>
+    <string name="take_photo">Сделать фото</string>
+</resources>

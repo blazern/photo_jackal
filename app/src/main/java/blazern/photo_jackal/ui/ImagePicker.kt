@@ -14,7 +14,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import blazern.photo_jackal.MyFileProvider
+import blazern.photo_jackal.R
 
 @Composable
 fun ImagePicker(
@@ -52,7 +54,7 @@ fun ImagePicker(
                 imagePicker.launch("image/*")
             },
         ) {
-            Text(text = "Select Image")
+            Text(text = stringResource(R.string.select_image))
         }
         Button(
             onClick = {
@@ -61,7 +63,7 @@ fun ImagePicker(
                 cameraLauncher.launch(uri)
             },
         ) {
-            Text(text = "Take photo")
+            Text(text = stringResource(R.string.take_photo))
         }
     }
 }

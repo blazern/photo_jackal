@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Foto Schakal</string>
+    <string name="selected_image">Ausgewähltes Bild</string>
+    <string name="compression_level">Kompressionsstufe</string>
+    <string name="resolution">Bildauflösung</string>
+    <string name="share">Teilen</string>
+    <string name="share_image">Teilen</string>
+    <string name="select_image">Bild auswählen</string>
+    <string name="take_photo">Foto machen</string>
+</resources>

@@ -9,6 +9,7 @@ import android.net.Uri
 import android.util.Size
 import androidx.exifinterface.media.ExifInterface
 import blazern.photo_jackal.MyFileProvider
+import blazern.photo_jackal.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -90,6 +91,6 @@ fun Context.shareImage(imageUri: Uri) {
         flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
     }
 
-    val chooser = Intent.createChooser(shareIntent, "Share Image") // TODO: i18n
+    val chooser = Intent.createChooser(shareIntent, getString(R.string.share_image))
     startActivity(chooser)
 }
