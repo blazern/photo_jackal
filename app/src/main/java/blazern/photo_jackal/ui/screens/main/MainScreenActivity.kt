@@ -1,5 +1,6 @@
 package blazern.photo_jackal.ui.screens.main
 
+import android.net.Uri
 import android.os.Bundle
 import android.text.format.Formatter.formatShortFileSize
 import androidx.activity.ComponentActivity
@@ -22,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -57,122 +59,33 @@ class MainScreenActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             PhotoJackalTheme {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = 16.dp),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxHeight(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Column(
-                            modifier = Modifier.weight(10f),
-                            verticalArrangement = Arrangement.Center,
-                        ) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                val compressedImageUri by remember { derivedStateOf { viewModel.state.value.compressedImage } }
-                                if (compressedImageUri != null) {
-                                    AsyncImage(
-                                        model = compressedImageUri,
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentDescription = "Selected image",
-                                    )
-                                }
-                                val processing by remember { derivedStateOf { viewModel.state.value.processingImage } }
-                                if (processing) {
-                                    Box(
-                                        modifier = Modifier
-                                            .background(Color.White.copy(alpha = 0.5f))
-                                            .fillMaxSize(),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(50.dp),
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                        Text(text = "Compression level")
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            Image(painterResource(R.drawable.jackal_0), "", modifier = Modifier.weight(1f))
-                            Image(painterResource(R.drawable.jackal_1), "", modifier = Modifier.weight(1f))
-                            Image(painterResource(R.drawable.jackal_2), "", modifier = Modifier.weight(1f))
-                            Image(painterResource(R.drawable.jackal_3), "", modifier = Modifier.weight(1f))
-                            Image(painterResource(R.drawable.jackal_4), "", modifier = Modifier.weight(1f))
-                            Image(painterResource(R.drawable.jackal_5), "", modifier = Modifier.weight(1f))
-                        }
-                        val compressLevel by remember { derivedStateOf { viewModel.state.value.imageCompressLevel } }
-                        Slider(
-                            modifier = Modifier.weight(1f),
-                            value = compressLevel,
-                            onValueChange = { viewModel.onCompressLevelChange(it) }
-                        )
-                        val compressedImageResolution by remember { derivedStateOf { viewModel.state.value.compressedImageResolution } }
-                        Row {
-                            Text(text = "Resolution ")
-                            val compressedWidth = compressedImageResolution?.width
-                            val compressedHeight = compressedImageResolution?.height
-                            if (compressedWidth != null && compressedHeight != null) {
-                                Text(text = "${compressedWidth}x$compressedHeight")
-                            }
-                        }
-                        val imageResolution by remember { derivedStateOf { viewModel.state.value.selectedImageResolution } }
-                        val imageMinResolution by remember { derivedStateOf { viewModel.state.value.compressedImageMinimalResolution } }
-                        val imageWidth = imageResolution?.width
-                        val imageHeight = imageResolution?.height
-                        val minWidth = imageMinResolution?.width
-                        val minHeight = imageMinResolution?.height
-                        if (imageWidth != null && imageHeight != null && minWidth != null && minHeight != null) {
-                            Row(modifier = Modifier.fillMaxWidth()) {
-                                val maxResolutionStr = "${imageWidth}x${imageHeight}"
-                                val minResolutionStr = "${minWidth}x${minHeight}"
-                                Text(
-                                    minResolutionStr,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Text(
-                                    maxResolutionStr,
-                                    modifier = Modifier.weight(1f),
-                                    textAlign = TextAlign.End
-                                )
-                            }
-                        }
-                        val resolutionScale by remember { derivedStateOf { viewModel.state.value.imageResolutionScale } }
-                        Slider(
-                            modifier = Modifier.weight(1f),
-                            value = resolutionScale,
-                            onValueChange = { viewModel.onResolutionScaleChange(it) }
-                        )
-                        ImagePicker(modifier = Modifier.weight(2f)) {
-                            if (it != null) {
-                                cropImageLauncher.launch(
-                                    CropImageContractOptions(uri = it, cropImageOptions = CropImageOptions())
-                                )
-                            } else {
-                                viewModel.onImagePicked(Result.success(null))
-                            }
-                        }
-                        val compressedSize by remember { derivedStateOf { viewModel.state.value.compressedImageSize } }
-                        val compressedImageUri by remember { derivedStateOf { viewModel.state.value.compressedImage } }
-                        if (compressedSize != null && compressedImageUri != null) {
-                            val sizeHumanReadable = formatShortFileSize(this@MainScreenActivity, compressedSize?.toLong() ?: 0)
-                            Button(onClick = {
-                                shareImage(compressedImageUri!!)
-                            }) {
-                                Text("Share ($sizeHumanReadable)")
-                            }
-                        }
-                    }
-                }
+                MainScreenUI(
+                    state = viewModel.state,
+                    onCompressLevelChange = { viewModel.onCompressLevelChange(it) },
+                    onResolutionScaleChange = { viewModel.onResolutionScaleChange(it) },
+                    onUserPickedImage = ::onUserPickedImage,
+                    onShareImageClick = ::shareCompressedImage,
+                )
             }
         }
+    }
+
+    private fun onUserPickedImage(imageUri: Uri?) {
+        if (imageUri != null) {
+            cropImageLauncher.launch(
+                CropImageContractOptions(
+                    uri = imageUri,
+                    cropImageOptions = CropImageOptions()
+                )
+            )
+        } else {
+            viewModel.onImagePicked(Result.success(null))
+        }
+    }
+
+    private fun shareCompressedImage() {
+        val compressedImageUri = viewModel.state.value.compressedImage
+        compressedImageUri?.let { shareImage(it) }
     }
 }
 
