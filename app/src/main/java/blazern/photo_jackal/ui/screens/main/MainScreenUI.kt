@@ -26,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -86,56 +87,63 @@ fun MainScreenUI(
                     }
                 }
             }
-            Text(text = stringResource(R.string.compression_level))
-            Row(modifier = Modifier.fillMaxWidth()) {
-                Image(painterResource(R.drawable.jackal_4), "", modifier = Modifier.weight(1f))
-                Image(painterResource(R.drawable.jackal_3), "", modifier = Modifier.weight(1f))
-                Image(painterResource(R.drawable.jackal_2), "", modifier = Modifier.weight(1f))
-                Image(painterResource(R.drawable.jackal_1), "", modifier = Modifier.weight(1f))
-                Image(painterResource(R.drawable.jackal_0), "", modifier = Modifier.weight(1f))
-            }
-            val compressLevel by remember { derivedStateOf { state.value.imageCompressLevel } }
-            Slider(
-                modifier = Modifier.weight(1f),
-                value = compressLevel,
-                onValueChange = { onCompressLevelChange(it) }
-            )
-            val compressedImageResolution by remember { derivedStateOf { state.value.compressedImageResolution } }
-            Row {
-                Text(text = stringResource(R.string.resolution) + " ")
-                val compressedWidth = compressedImageResolution?.width
-                val compressedHeight = compressedImageResolution?.height
-                if (compressedWidth != null && compressedHeight != null) {
-                    Text(text = "${compressedWidth}x$compressedHeight")
-                }
-            }
-            val imageResolution by remember { derivedStateOf { state.value.selectedImageResolution } }
-            val imageMinResolution by remember { derivedStateOf { state.value.compressedImageMinimalResolution } }
-            val imageWidth = imageResolution?.width
-            val imageHeight = imageResolution?.height
-            val minWidth = imageMinResolution?.width
-            val minHeight = imageMinResolution?.height
-            if (imageWidth != null && imageHeight != null && minWidth != null && minHeight != null) {
+            val controlsAlpha by remember { derivedStateOf {
+                if (state.value.selectedImage != null) 1f else 0f
+            } }
+            Column(modifier = Modifier
+                .weight(4f)
+                .alpha(controlsAlpha),
+                verticalArrangement = Arrangement.Center)
+            {
+                Text(text = stringResource(R.string.compression_level))
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    val maxResolutionStr = "${imageWidth}x${imageHeight}"
-                    val minResolutionStr = "${minWidth}x${minHeight}"
-                    Text(
-                        minResolutionStr,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Text(
-                        maxResolutionStr,
-                        modifier = Modifier.weight(1f),
-                        textAlign = TextAlign.End
-                    )
+                    Image(painterResource(R.drawable.jackal_4), "", modifier = Modifier.weight(1f))
+                    Image(painterResource(R.drawable.jackal_3), "", modifier = Modifier.weight(1f))
+                    Image(painterResource(R.drawable.jackal_2), "", modifier = Modifier.weight(1f))
+                    Image(painterResource(R.drawable.jackal_1), "", modifier = Modifier.weight(1f))
+                    Image(painterResource(R.drawable.jackal_0), "", modifier = Modifier.weight(1f))
                 }
+                val compressLevel by remember { derivedStateOf { state.value.imageCompressLevel } }
+                Slider(
+                    value = compressLevel,
+                    onValueChange = { onCompressLevelChange(it) }
+                )
+                val compressedImageResolution by remember { derivedStateOf { state.value.compressedImageResolution } }
+                Row {
+                    Text(text = stringResource(R.string.resolution) + " ")
+                    val compressedWidth = compressedImageResolution?.width
+                    val compressedHeight = compressedImageResolution?.height
+                    if (compressedWidth != null && compressedHeight != null) {
+                        Text(text = "${compressedWidth}x$compressedHeight")
+                    }
+                }
+                val imageResolution by remember { derivedStateOf { state.value.selectedImageResolution } }
+                val imageMinResolution by remember { derivedStateOf { state.value.compressedImageMinimalResolution } }
+                val imageWidth = imageResolution?.width
+                val imageHeight = imageResolution?.height
+                val minWidth = imageMinResolution?.width
+                val minHeight = imageMinResolution?.height
+                if (imageWidth != null && imageHeight != null && minWidth != null && minHeight != null) {
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        val maxResolutionStr = "${imageWidth}x${imageHeight}"
+                        val minResolutionStr = "${minWidth}x${minHeight}"
+                        Text(
+                            minResolutionStr,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            maxResolutionStr,
+                            textAlign = TextAlign.End,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+                val resolutionScale by remember { derivedStateOf { state.value.imageResolutionScale } }
+                Slider(
+                    value = resolutionScale,
+                    onValueChange = { onResolutionScaleChange.invoke(it) }
+                )
             }
-            val resolutionScale by remember { derivedStateOf { state.value.imageResolutionScale } }
-            Slider(
-                modifier = Modifier.weight(1f),
-                value = resolutionScale,
-                onValueChange = { onResolutionScaleChange.invoke(it) }
-            )
             ImagePicker(modifier = Modifier.weight(2f)) {
                 onUserPickedImage.invoke(it)
             }
