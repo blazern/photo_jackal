@@ -50,11 +50,12 @@ import coil.compose.AsyncImage
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 
-
+@AndroidEntryPoint
 class MainScreenActivity : ComponentActivity() {
     private val viewModel by viewModels<MainScreenViewModel>()
 
