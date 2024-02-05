@@ -15,11 +15,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
@@ -51,6 +52,7 @@ fun MainScreenUI(
     onUserPickedImage: (Uri?)->Unit,
     onShareImageClick: ()->Unit,
     onRemoveImageCLick: ()->Unit,
+    onSettingsClick: ()->Unit,
 ) {
     Surface(
         modifier = Modifier
@@ -72,8 +74,8 @@ fun MainScreenUI(
                     contentAlignment = Alignment.Center,
                 ) {
                     val compressedImageUri by remember { derivedStateOf { state.value.compressedImage } }
-                    if (compressedImageUri != null) {
-                        Box {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        if (compressedImageUri != null) {
                             AsyncImage(
                                 model = compressedImageUri,
                                 modifier = Modifier.fillMaxSize(),
@@ -90,6 +92,16 @@ fun MainScreenUI(
                                 }) {
                                 Text(stringResource(R.string.clear_image), color = Color.Black)
                             }
+                        }
+                        IconButton(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd),
+                            onClick = onSettingsClick)
+                        {
+                            Icon(
+                                imageVector = Icons.Filled.Settings,
+                                contentDescription = "Settings"
+                            )
                         }
                     }
                     val processing by remember { derivedStateOf { state.value.processingImage } }
