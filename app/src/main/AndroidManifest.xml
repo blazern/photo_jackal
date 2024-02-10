@@ -25,11 +25,12 @@
         </activity>
 
         <activity android:name=".ui.screens.privacy_policy.PrivacyPolicyActivity"/>
-
+        <activity
+            android:name=".ui.screens.onboarding.OnboardingActivity"
+            android:theme="@style/Base.Theme.AppCompat"/>
         <activity
             android:name="com.canhub.cropper.CropImageActivity"
-            android:theme="@style/Base.Theme.AppCompat"
-            />
+            android:theme="@style/Base.Theme.AppCompat" />
 
         <provider
             android:name=".MyFileProvider"

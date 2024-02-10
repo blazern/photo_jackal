@@ -8,4 +8,13 @@
     <string name="select_image">Select image</string>
     <string name="clear_image">Clear image</string>
     <string name="take_photo">Take photo</string>
+
+    <string name="onboarding1_descr">Here\'s the privacy policy, if you\'re into such kind of things</string>
+    <string name="onboarding1_button">Privacy Policy</string>
+
+    <string name="onboarding2_title">App\'s purpose</string>
+    <string name="onboarding2_descr">The whole purpose of this tiny app is to degrade quality of your photos, so that they would take less space (doesn\'t matter, if they would start looking horrible)</string>
+
+    <string name="onboarding3_title">Why does the app look so unpolished?</string>
+    <string name="onboarding3_descr">Because I didn\'t polish it! I made it in one weekend for personal use, but then thought that maybe someone else would also find it handy</string>
 </resources>

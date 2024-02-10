@@ -8,4 +8,13 @@
     <string name="select_image">Bild auswählen</string>
     <string name="clear_image">Bild löschen</string>
     <string name="take_photo">Foto machen</string>
+
+    <string name="onboarding1_descr">Hier ist die Datenschutzerklärung, falls du dich für solche dinge interessierst</string>
+    <string name="onboarding1_button">Datenschutzerklärung</string>
+
+    <string name="onboarding2_title">Zweck der App</string>
+    <string name="onboarding2_descr">Der Zweck dieser kleinen App ist es, die Qualität deiner Fotos zu verschlechtern, damit sie weniger Speicherplatz benötigen (es macht nichts, wenn sie anfangen, schrecklich auszusehen)</string>
+
+    <string name="onboarding3_title">Warum sieht die App so ungeschliffen aus?</string>
+    <string name="onboarding3_descr">Weil ich sie nicht geschleift habe! Ich habe sie an einem Wochenende für den persönlichen Gebrauch gemacht, aber dann dachte ich, dass sie vielleicht auch für andere nützlich sein könnte</string>
 </resources>
