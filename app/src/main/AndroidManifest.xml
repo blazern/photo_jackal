@@ -34,7 +34,7 @@
 
         <provider
             android:name=".MyFileProvider"
-            android:authorities="blazern.photo_jackal.fileprovider"
+            android:authorities="${fileProviderAuthority}"
             android:grantUriPermissions="true"
             android:exported="false">
             <meta-data

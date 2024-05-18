@@ -29,6 +29,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            manifestPlaceholders["fileProviderAuthority"] = "blazern.photo_jackal.fileprovider"
+        }
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-DEBUG"
+            manifestPlaceholders["fileProviderAuthority"] = "blazern.photo_jackal.fileprovider.debug"
         }
     }
     compileOptions {
