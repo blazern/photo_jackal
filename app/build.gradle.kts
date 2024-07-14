@@ -34,7 +34,7 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-DEBUG"
-            manifestPlaceholders["fileProviderAuthority"] = "blazern.photo_jackal.fileprovider.debug"
+            manifestPlaceholders["fileProviderAuthority"] = "blazern.photo_jackal.debug.fileprovider"
         }
     }
     compileOptions {
