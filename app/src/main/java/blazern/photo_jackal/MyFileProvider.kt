@@ -3,7 +3,6 @@ package blazern.photo_jackal
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.FileProvider
-import androidx.core.content.res.ResourcesCompat
 import java.io.File
 
 class MyFileProvider : FileProvider(

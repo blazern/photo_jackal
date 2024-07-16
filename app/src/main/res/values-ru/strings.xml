@@ -11,11 +11,15 @@
 
 
     <string name="onboarding1_descr">Вот политика конфиденциальности, если тебя вдруг интересуют такие вещи</string>
-    <string name="onboarding1_button">Политика Конфиденциальности</string>
+    <string name="onboarding1_privacy_policy_button">Политика Конфиденциальности</string>
 
     <string name="onboarding2_title">Цель приложения</string>
     <string name="onboarding2_descr">Единственная цель этого маленького приложения - ухудшить качество твоих фото, чтобы они занимали меньше места (и неважно, что они начнут ужасно выглядеть)</string>
 
     <string name="onboarding3_title">Почему приложение выглядит так… сыро?</string>
     <string name="onboarding3_descr">Потому что я не особо старался! Я сделал приложение за выходные для личного пользования, но потом подумал, что может оно ещё кому-нибудь пригодится</string>
+
+    <string name="onboarding_next">Далее</string>
+    <string name="onboarding_finish">Готово</string>
+    <string name="onboarding_back">Назад</string>
 </resources>
