@@ -5,6 +5,7 @@ import android.util.Size
 
 data class MainScreenState(
     val processingImage: Boolean = false,
+    val processingImageStartTime: Long = 0,
 
     val selectedImage: Uri? = null,
     val selectedImageResolution: Size? = null,

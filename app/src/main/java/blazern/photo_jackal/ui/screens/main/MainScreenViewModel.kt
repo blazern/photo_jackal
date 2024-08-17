@@ -1,6 +1,7 @@
 package blazern.photo_jackal.ui.screens.main
 
 import android.net.Uri
+import android.os.SystemClock
 import android.util.Size
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -94,7 +95,10 @@ class MainScreenViewModel @Inject constructor(
             return
         }
 
-        _state.value = state.value.copy(processingImage = true)
+        _state.value = state.value.copy(
+            processingImage = true,
+            processingImageStartTime = SystemClock.uptimeMillis(),
+        )
         try {
             // So that the resolution would never be 0x0
             val mappedResolutionScale = mapResolutionScale(state.value.imageResolutionScale)
