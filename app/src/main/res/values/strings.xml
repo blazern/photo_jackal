@@ -8,6 +8,7 @@
     <string name="select_image">Select image</string>
     <string name="clear_image">Clear image</string>
     <string name="take_photo">Take photo</string>
+    <string name="image_hint">Please select an image or take a photo</string>
 
     <string name="onboarding1_descr">Here\'s the privacy policy, if you\'re into such kind of things</string>
     <string name="onboarding1_privacy_policy_button">Privacy Policy</string>

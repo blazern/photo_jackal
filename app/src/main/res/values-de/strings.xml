@@ -8,6 +8,7 @@
     <string name="select_image">Bild auswählen</string>
     <string name="clear_image">Bild löschen</string>
     <string name="take_photo">Foto machen</string>
+    <string name="image_hint">Bitte wähle ein Bild oder mach ein Foto</string>
 
     <string name="onboarding1_descr">Hier ist die Datenschutzerklärung, falls du dich für solche dinge interessierst</string>
     <string name="onboarding1_privacy_policy_button">Datenschutzerklärung</string>

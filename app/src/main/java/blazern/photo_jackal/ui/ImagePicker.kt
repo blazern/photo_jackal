@@ -17,9 +17,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import blazern.photo_jackal.MyFileProvider
 import blazern.photo_jackal.R
+import blazern.photo_jackal.ui.theme.PhotoJackalTheme
 
 @Composable
 fun ImagePicker(
@@ -69,5 +71,13 @@ fun ImagePicker(
         ) {
             Text(text = stringResource(R.string.take_photo))
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun Preview() {
+    PhotoJackalTheme {
+        ImagePicker(modifier = Modifier) {}
     }
 }

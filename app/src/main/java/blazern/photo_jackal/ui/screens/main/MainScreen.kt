@@ -43,7 +43,7 @@ fun MainScreen(
                     viewModel.onImagePicked(Result.success(null))
                 }
             },
-            onRemoveImageCLick = { viewModel.removeSelectedImage() },
+            onRemoveImageClick = { viewModel.removeSelectedImage() },
             onShareImageClick = {
                 val compressedImageUri = viewModel.state.value.compressedImage
                 compressedImageUri?.let { context.shareImage(it) }

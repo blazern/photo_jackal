@@ -8,7 +8,7 @@
     <string name="select_image">Выбрать картинку</string>
     <string name="clear_image">Убрать картинку</string>
     <string name="take_photo">Сделать фото</string>
-
+    <string name="image_hint">Пожалуйста, выбери картинку или сделай фото</string>
 
     <string name="onboarding1_descr">Вот политика конфиденциальности, если тебя вдруг интересуют такие вещи</string>
     <string name="onboarding1_privacy_policy_button">Политика Конфиденциальности</string>
