@@ -23,3 +23,6 @@ jobs:
         if: always()
         run:
           cat app/build/reports/tests/testDebugUnitTest/index.html >> $GITHUB_STEP_SUMMARY
+
+      - name: Build release to ensure it is working
+        run: ./gradlew bundleRelease
