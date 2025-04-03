@@ -1,0 +1,82 @@
+name: create-release
+
+on:
+  # TODO: remove
+  push:
+    branches:
+      - release-workflow
+  workflow_dispatch:
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+
+      - name: Build release
+        run: ./gradlew bundleRelease
+
+      - name: Decrypt the keystore
+        run: |
+          gpg --quiet --batch --yes --decrypt \
+            --passphrase="${{ secrets.RELEASE_KEYSTORE_GPG_PASSPHRASE }}" \
+            --output ./keystore.jks \
+            ./keystore.jks.gpg
+
+      - name: Sign the release .aab
+        run: |
+          jarsigner -keystore ./keystore.jks \
+          ./app/build/outputs/bundle/release/app-release.aab ${{ secrets.RELEASE_KEYSTORE_KEY_ALIAS }} \
+          -storepass "${{ secrets.RELEASE_KEYSTORE_STOREPASS }}" \
+          -keypass "${{ secrets.RELEASE_KEYSTORE_KEYPASS }}"
+
+      - name: Download bundletool
+        run: |
+          downloadUrl="https://github.com/google/bundletool/releases/download/1.18.1/bundletool-all-1.18.1.jar"
+          curl $downloadUrl -4 -sL -o "bundletool.jar"
+
+      - name: Extract version name
+        id: extract
+        run: |
+          version_name=$(java -jar bundletool.jar dump manifest \
+            --bundle ./app/build/outputs/bundle/release/app-release.aab \
+            --xpath /manifest/@android:versionName)
+          echo "version_name=$version_name" >> $GITHUB_OUTPUT
+          
+          version_code=$(java -jar bundletool.jar dump manifest \
+            --bundle ./app/build/outputs/bundle/release/app-release.aab \
+            --xpath /manifest/@android:versionCode)
+          echo "version_code=$version_code" >> $GITHUB_OUTPUT
+
+      - name: Set up Git
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+
+      - name: Create Tag
+        run: |
+          git tag ${{ steps.extract.outputs.version_code }}
+          git push origin ${{ steps.extract.outputs.version_code }}
+
+      - name: Create Github Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "./app/build/outputs/bundle/release/app-release.aab"
+          artifactErrorsFailBuild: true
+          generateReleaseNotes: true
+          tag: ${{ steps.extract.outputs.version_code }}
+          name: "${{ steps.extract.outputs.version_code }} ${{ steps.extract.outputs.version_name }}"
+
+      - name: Upload to Play Store
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          packageName: blazern.photo_jackal
+          releaseFiles: app/build/outputs/bundle/release/app-release.aab
+          track: production
