@@ -1,0 +1,25 @@
+name: on-pull-request
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+
+      - name: Run tests
+        run: ./gradlew testDebugUnitTest
+
+      - name: Tests results
+        if: always()
+        run:
+          cat app/build/reports/tests/testDebugUnitTest/index.html >> $GITHUB_STEP_SUMMARY
