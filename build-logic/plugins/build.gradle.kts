@@ -3,6 +3,11 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
 }
 
+repositories {
+    mavenCentral()
+    google()
+}
+
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(17))
@@ -12,6 +17,7 @@ java {
 dependencies {
     compileOnly(libs.android.gradlePlugin.api)
     implementation(gradleKotlinDsl())
+    testImplementation("junit:junit:4.13.2")
 }
 
 gradlePlugin {

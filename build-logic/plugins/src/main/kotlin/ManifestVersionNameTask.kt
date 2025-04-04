@@ -30,7 +30,7 @@ abstract class ManifestVersionNameTask: DefaultTask() {
     fun taskAction() {
         val buildTime = buildTime.get()
         val buildTimeStr = DateTimeFormatter
-            .ofPattern("yyyy-MM-DD-HH:mm", Locale.ENGLISH)
+            .ofPattern("yyyy-MM-dd-HH:mm", Locale.ENGLISH)
             .format(buildTime)
         val gitVersion = gitVersionFile.get().asFile.readText()
         val versionName = "$buildTimeStr $gitVersion"
