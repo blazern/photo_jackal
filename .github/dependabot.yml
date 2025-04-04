@@ -10,3 +10,7 @@ updates:
         patterns:
           - "com.google.dagger:*"
           - "androidx.hilt:*"
+      kotlin:
+        patterns:
+          - "androidx.compose.compiler:compiler"
+          - "org.jetbrains.kotlin*"
