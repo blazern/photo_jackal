@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "blazern.photo_jackal"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "blazern.photo_jackal"
