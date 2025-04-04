@@ -13,7 +13,7 @@ android {
     defaultConfig {
         applicationId = "blazern.photo_jackal"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 2
         versionName = "2024.02.10"
 
