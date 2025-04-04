@@ -75,7 +75,7 @@ dependencies {
     implementation("androidx.exifinterface:exifinterface:1.3.7")
     implementation("com.vanniktech:android-image-cropper:4.5.0")
     implementation("com.google.dagger:hilt-android:2.50")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.constraintlayout:constraintlayout:2.2.1")
     implementation("androidx.compose.ui:ui-test-junit4-android:1.6.7")
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
