@@ -75,7 +75,7 @@ dependencies {
     implementation("com.vanniktech:android-image-cropper:4.5.0")
     implementation("com.google.dagger:hilt-android:2.56.1")
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")
-    implementation("androidx.compose.ui:ui-test-junit4-android:1.6.7")
+    implementation("androidx.compose.ui:ui-test-junit4-android:1.7.8")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
     kapt("com.google.dagger:hilt-android-compiler:2.56.1")
