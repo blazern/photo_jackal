@@ -34,3 +34,9 @@ jobs:
 
       - name: Build release to ensure it is working
         run: ./gradlew bundleRelease
+
+      - name: Automerge
+        if: github.event.pull_request.user.login != 'dependabot[bot]'
+        run: gh pr merge --delete-branch --merge --auto ${{ github.head_ref }}
+        env:
+          GH_TOKEN: ${{ github.token }}
