@@ -79,7 +79,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-test-junit4-android:1.6.7")
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
-    implementation("androidx.compose.material:material-icons-extended:1.6.7")
+    implementation("androidx.compose.material:material-icons-extended:1.7.8")
     kapt("com.google.dagger:hilt-android-compiler:2.50")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.14.1")
