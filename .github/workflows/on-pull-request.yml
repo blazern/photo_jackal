@@ -24,5 +24,13 @@ jobs:
         run:
           cat app/build/reports/tests/testDebugUnitTest/index.html >> $GITHUB_STEP_SUMMARY
 
+      - name: Run Gradle tests
+        run: ./gradlew :build-logic:plugins:test
+
+      - name: Gradle test results
+        if: always()
+        run:
+          cat build-logic/plugins/build/reports/tests/test/index.html >> $GITHUB_STEP_SUMMARY
+
       - name: Build release to ensure it is working
         run: ./gradlew bundleRelease
