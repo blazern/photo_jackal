@@ -4,6 +4,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.dagger.hilt.android")
     id("blazern.photo_jackal.appVersionPlugin")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
@@ -48,9 +49,6 @@ android {
     buildFeatures {
         compose = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.15"
-    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -65,6 +63,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("androidx.activity:activity-compose:1.8.2")
     implementation(platform("androidx.compose:compose-bom:2023.08.00"))
+    implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
@@ -77,7 +76,6 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.56.1")
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")
     implementation("androidx.compose.ui:ui-test-junit4-android:1.6.7")
-    implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
     kapt("com.google.dagger:hilt-android-compiler:2.56.1")
