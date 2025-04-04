@@ -72,7 +72,7 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("io.coil-kt:coil-compose:2.5.0")
     implementation("androidx.exifinterface:exifinterface:1.3.7")
-    implementation("com.vanniktech:android-image-cropper:4.5.0")
+    implementation("com.vanniktech:android-image-cropper:4.6.0")
     implementation("com.google.dagger:hilt-android:2.56.1")
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")
     implementation("androidx.compose.ui:ui-test-junit4-android:1.6.7")
