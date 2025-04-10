@@ -3,10 +3,10 @@ package blazern.photo_jackal.ui.screens.onboarding
 import android.app.Application
 import android.content.Context
 import androidx.core.content.edit
+import dagger.hilt.android.scopes.ActivityRetainedScoped
 import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
+@ActivityRetainedScoped
 class OnboardingManager @Inject constructor(private val context: Application) {
     private val prefs = context.getSharedPreferences("ONBOARDING", Context.MODE_PRIVATE)
 

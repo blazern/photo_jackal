@@ -1,15 +1,23 @@
 package blazern.photo_jackal.ui.screens.main
 
+import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.SystemClock
 import android.util.Size
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import blazern.photo_jackal.crop.CropImageContract
+import blazern.photo_jackal.intents.IntentDispatcher
+import blazern.photo_jackal.intents.StartsForResultsManager
 import blazern.photo_jackal.usecase.CalculateFileSizeUseCase
 import blazern.photo_jackal.usecase.CompressAndSaveImageUseCase
 import blazern.photo_jackal.usecase.GetImageResolutionUseCase
+import com.canhub.cropper.CropImageView
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -20,13 +28,63 @@ class MainScreenViewModel @Inject constructor(
     private val compressAndSaveImageUseCase: CompressAndSaveImageUseCase,
     private val getImageResolutionUseCase: GetImageResolutionUseCase,
     private val calculateFileSizeUseCase: CalculateFileSizeUseCase,
+    private val intentDispatcher: IntentDispatcher,
+    private val forResultsManager: StartsForResultsManager,
 ) : ViewModel() {
     private var recalculateAndSaveCompressedStateScheduled = false
+    private val intentsReceiver: (Intent) -> Boolean
+    private val activityResultCallback: ActivityResultCallback<CropImageView.CropResult>
+    private val cropStarter: ActivityResultLauncher<CropImageContract.Options>
 
     private val _state = mutableStateOf(MainScreenState())
     val state: State<MainScreenState> = _state
 
-    fun onCropImageResult(result: Result<Uri?>) {
+    init {
+        activityResultCallback =
+            ActivityResultCallback { result ->
+                if (result.isSuccessful) {
+                    onCropImageResult(Result.success(result.uriContent))
+                } else {
+                    onCropImageResult(Result.failure(result.error!!))
+                }
+            }
+        cropStarter = forResultsManager.registerForActivityResult(CropImageContract, activityResultCallback)
+
+        intentsReceiver = this::onIntent
+        intentDispatcher.addReceiver(intentsReceiver)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        intentDispatcher.removeReceiver(intentsReceiver)
+        forResultsManager.unregisterForActivityResult(CropImageContract, activityResultCallback)
+    }
+
+    private fun onIntent(intent: Intent): Boolean {
+        val isImageSent = Intent.ACTION_SEND == intent.action
+                && intent.type?.startsWith("image/") == true
+        if (!isImageSent) {
+            return false
+        }
+        val imageUri: Uri? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getParcelableExtra(Intent.EXTRA_STREAM)
+        }
+        imageUri?.let {
+            cropImage(it)
+        }
+        return true
+    }
+
+    fun cropImage(imageUri: Uri) {
+        cropStarter.launch(
+            CropImageContract.Options(imageUri)
+        )
+    }
+
+    private fun onCropImageResult(result: Result<Uri?>) {
         onImagePicked(result)
     }
 
