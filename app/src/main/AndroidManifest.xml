@@ -19,15 +19,18 @@
             android:theme="@style/Theme.PhotoJackal">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.SEND" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
             </intent-filter>
         </activity>
 
-        <activity android:name=".ui.screens.privacy_policy.PrivacyPolicyActivity"/>
-        <activity
-            android:name=".ui.screens.onboarding.OnboardingActivity"
-            android:theme="@style/Base.Theme.AppCompat"/>
         <activity
             android:name="com.canhub.cropper.CropImageActivity"
             android:theme="@style/Base.Theme.AppCompat" />
