@@ -44,7 +44,10 @@ suspend fun Context.compressImage(imageUri: Uri, compressionQuality: Float, fina
     }
 }
 
+@Suppress("NAME_SHADOWING")
 private fun Context.compressImageImpl(imageUri: Uri, compressionQuality: Float, finalSize: Size, result: OutputStream) {
+    val compressionQuality = compressionQuality.coerceIn(0f, 1f)
+
     // Get the orientation
     val orientation = contentResolver.openInputStream(imageUri).use { inputStream ->
         val exifInterface = inputStream?.let { ExifInterface(it) }
