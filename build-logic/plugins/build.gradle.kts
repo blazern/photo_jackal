@@ -17,7 +17,7 @@ java {
 dependencies {
     compileOnly(libs.android.gradlePlugin.api)
     implementation(gradleKotlinDsl())
-    testImplementation("junit:junit:4.13.2")
+    testImplementation(libs.junit)
 }
 
 gradlePlugin {
