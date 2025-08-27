@@ -17,7 +17,7 @@ lifecycleRuntimeKtx = "2.9.1"
 materialIconsExtended = "1.7.8"
 mockk = "1.14.2"
 navigationCompose = "2.9.0"
-robolectric = "4.14.1"
+robolectric = "4.16"
 uiTestJunit4Android = "1.8.2"
 
 [libraries]
